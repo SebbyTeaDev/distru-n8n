@@ -228,7 +228,7 @@ export class Distru implements INodeType {
 						operation: FORM_DATA_OPERATIONS,
 					},
 				},
-				description: 'Additional multipart fields such as product_id, order_id, name, etc.',
+				description: 'Additional multipart fields such as product_id, order_id, name, etc',
 			},
 		],
 	};
