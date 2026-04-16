@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.8] - 2026-04-16
+
+### Changed
+
+- **Distru** node **typeVersion 3**: replaced the **Query** JSON field with native **Page Number**, **Page Size**, and **Additional Query Parameters** (name/value rows). Replaced multipart **Form Data** JSON with **Additional Form Fields**. **Body** remains JSON for nested upsert payloads (orders, invoices, purchases, etc.).
+
+### Migration from typeVersion 2
+
+- Upgrade each **Distru** node to v3 in the editor. Map old `query` keys into **Additional Query Parameters**; use **Page Number** / **Page Size** instead of `page` / `page_number` / `page_size` inside JSON. Use **0** for both page fields to omit `page[number]` / `page[size]` (same as an empty query before).
+
+[4.1.8]: https://github.com/SebbyTeaDev/distru-n8n/compare/v4.1.7...v4.1.8
+
 ## [4.1.7] - 2026-04-15
 
 ### Changed

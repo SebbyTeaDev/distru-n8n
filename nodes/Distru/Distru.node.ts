@@ -59,6 +59,10 @@ const FORM_DATA_OPERATIONS = Object.keys(OPERATION_CONFIG).filter(
 	(op) => OPERATION_CONFIG[op].usesFormData,
 );
 
+const QUERY_OPERATIONS = Object.keys(OPERATION_CONFIG).filter(
+	(op) => OPERATION_CONFIG[op].usesQuery,
+);
+
 function removeEmpty(value: unknown): unknown {
 	if (Array.isArray(value)) {
 		return value
@@ -80,32 +84,38 @@ function removeEmpty(value: unknown): unknown {
 	return value;
 }
 
-function normalizeQuery(query: IDataObject): IDataObject {
-	const normalized: IDataObject = { ...query };
-	const page = normalized.page;
-
-	if (page && typeof page === 'object' && !Array.isArray(page)) {
-		const pageObject = page as IDataObject;
-		if (pageObject.number !== undefined) {
-			normalized['page[number]'] = pageObject.number;
+function buildQueryFromUi(
+	pageNumber: number,
+	pageSize: number,
+	additional: { queryParameter?: Array<{ name: string; value: string }> },
+): IDataObject {
+	const qs: IDataObject = {};
+	if (pageNumber > 0) {
+		qs['page[number]'] = pageNumber;
+	}
+	if (pageSize > 0) {
+		qs['page[size]'] = pageSize;
+	}
+	for (const row of additional.queryParameter ?? []) {
+		const key = (row.name ?? '').trim();
+		if (key) {
+			qs[key] = row.value;
 		}
-		if (pageObject.size !== undefined) {
-			normalized['page[size]'] = pageObject.size;
+	}
+	return (removeEmpty(qs) as IDataObject) ?? {};
+}
+
+function collectFormFields(additional: {
+	formField?: Array<{ name: string; value: string }>;
+}): IDataObject {
+	const out: IDataObject = {};
+	for (const row of additional.formField ?? []) {
+		const key = (row.name ?? '').trim();
+		if (key) {
+			out[key] = row.value;
 		}
-		delete normalized.page;
 	}
-
-	if (normalized.page_number !== undefined) {
-		normalized['page[number]'] = normalized.page_number;
-		delete normalized.page_number;
-	}
-
-	if (normalized.page_size !== undefined) {
-		normalized['page[size]'] = normalized.page_size;
-		delete normalized.page_size;
-	}
-
-	return (removeEmpty(normalized) as IDataObject) ?? {};
+	return (removeEmpty(out) as IDataObject) ?? {};
 }
 
 export class Distru implements INodeType {
@@ -114,7 +124,7 @@ export class Distru implements INodeType {
 		name: 'distru',
 		icon: 'file:distru.svg',
 		group: ['transform'],
-		version: 2,
+		version: 3,
 		subtitle: '={{$parameter["operation"]}}',
 		description: 'Interact with the Distru Public API v1',
 		defaults: {
@@ -137,41 +147,41 @@ export class Distru implements INodeType {
 				required: true,
 				default: 'getProducts',
 				options: [
-					{ name: 'Delete Product POS Mapping', value: 'deleteProductPosMapping' },
-					{ name: 'Get Adjustments', value: 'getAdjustments' },
-					{ name: 'Get Assemblies', value: 'getAssemblies' },
-					{ name: 'Get Batches', value: 'getBatches' },
-					{ name: 'Get Companies', value: 'getCompanies' },
-					{ name: 'Get Contacts', value: 'getContacts' },
-					{ name: 'Get Inventory', value: 'getInventory' },
-					{ name: 'Get Invoice By ID', value: 'getInvoiceById' },
-					{ name: 'Get Invoices', value: 'getInvoices' },
-					{ name: 'Get Locations', value: 'getLocations' },
-					{ name: 'Get Order By ID', value: 'getOrderById' },
-					{ name: 'Get Orders', value: 'getOrders' },
-					{ name: 'Get Packages', value: 'getPackages' },
-					{ name: 'Get Payment Methods', value: 'getPaymentMethods' },
-					{ name: 'Get Product POS Mappings', value: 'getProductPosMappings' },
-					{ name: 'Get Products', value: 'getProducts' },
-					{ name: 'Get Purchases', value: 'getPurchases' },
-					{ name: 'Get Strains', value: 'getStrains' },
-					{ name: 'Get Test Results', value: 'getTestResults' },
-					{ name: 'Get Users', value: 'getUsers' },
-					{ name: 'Insert File Attachment', value: 'postFileAttachment' },
-					{ name: 'Post Adjustment', value: 'postAdjustment' },
-					{ name: 'Post Batch', value: 'postBatch' },
-					{ name: 'Post Custom Field', value: 'postCustomField' },
-					{ name: 'Post Invoice Payment', value: 'postInvoicePayment' },
-					{ name: 'Post Purchase Payment', value: 'postPurchasePayment' },
-					{ name: 'Upsert Company', value: 'upsertCompany' },
-					{ name: 'Upsert Contact', value: 'upsertContact' },
-					{ name: 'Upsert Invoice', value: 'upsertInvoice' },
-					{ name: 'Upsert Order', value: 'upsertOrder' },
-					{ name: 'Upsert Product', value: 'upsertProduct' },
-					{ name: 'Upsert Product Images', value: 'upsertProductImages' },
-					{ name: 'Upsert Product POS Mapping', value: 'upsertProductPosMapping' },
-					{ name: 'Upsert Purchase', value: 'upsertPurchase' },
-					{ name: 'Upsert Test Result', value: 'upsertTestResult' },
+					{ name: 'Adjustments — Get Many', value: 'getAdjustments', action: 'Adjustments get many' },
+					{ name: 'Adjustments — Post', value: 'postAdjustment', action: 'Adjustments post' },
+					{ name: 'Assemblies — Get Many', value: 'getAssemblies', action: 'Assemblies get many' },
+					{ name: 'Batches — Get Many', value: 'getBatches', action: 'Batches get many' },
+					{ name: 'Batches — Post', value: 'postBatch', action: 'Batches post' },
+					{ name: 'Companies — Get Many', value: 'getCompanies', action: 'Companies get many' },
+					{ name: 'Companies — Upsert', value: 'upsertCompany', action: 'Companies upsert' },
+					{ name: 'Contacts — Get Many', value: 'getContacts', action: 'Contacts get many' },
+					{ name: 'Contacts — Upsert', value: 'upsertContact', action: 'Contacts upsert' },
+					{ name: 'Custom Fields — Post', value: 'postCustomField', action: 'Custom fields post' },
+					{ name: 'File Attachments — Upload', value: 'postFileAttachment', action: 'File attachments upload' },
+					{ name: 'Inventory — Get Many', value: 'getInventory', action: 'Inventory get many' },
+					{ name: 'Invoices — Get by ID', value: 'getInvoiceById', action: 'Invoices get by id' },
+					{ name: 'Invoices — Get Many', value: 'getInvoices', action: 'Invoices get many' },
+					{ name: 'Invoices — Post Payment', value: 'postInvoicePayment', action: 'Invoices post payment' },
+					{ name: 'Invoices — Upsert', value: 'upsertInvoice', action: 'Invoices upsert' },
+					{ name: 'Locations — Get Many', value: 'getLocations', action: 'Locations get many' },
+					{ name: 'Orders — Get by ID', value: 'getOrderById', action: 'Orders get by id' },
+					{ name: 'Orders — Get Many', value: 'getOrders', action: 'Orders get many' },
+					{ name: 'Orders — Upsert', value: 'upsertOrder', action: 'Orders upsert' },
+					{ name: 'Packages — Get Many', value: 'getPackages', action: 'Packages get many' },
+					{ name: 'Payment Methods — Get Many', value: 'getPaymentMethods', action: 'Payment methods get many' },
+					{ name: 'Product POS Mappings — Delete', value: 'deleteProductPosMapping', action: 'Product pos mappings delete' },
+					{ name: 'Product POS Mappings — Get Many', value: 'getProductPosMappings', action: 'Product pos mappings get many' },
+					{ name: 'Product POS Mappings — Upsert', value: 'upsertProductPosMapping', action: 'Product pos mappings upsert' },
+					{ name: 'Products — Get Many', value: 'getProducts', action: 'Products get many' },
+					{ name: 'Products — Upsert', value: 'upsertProduct', action: 'Products upsert' },
+					{ name: 'Products — Upsert Images', value: 'upsertProductImages', action: 'Products upsert images' },
+					{ name: 'Purchases — Get Many', value: 'getPurchases', action: 'Purchases get many' },
+					{ name: 'Purchases — Post Payment', value: 'postPurchasePayment', action: 'Purchases post payment' },
+					{ name: 'Purchases — Upsert', value: 'upsertPurchase', action: 'Purchases upsert' },
+					{ name: 'Strains — Get Many', value: 'getStrains', action: 'Strains get many' },
+					{ name: 'Test Results — Get Many', value: 'getTestResults', action: 'Test results get many' },
+					{ name: 'Test Results — Upsert', value: 'upsertTestResult', action: 'Test results upsert' },
+					{ name: 'Users — Get Many', value: 'getUsers', action: 'Users get many' },
 				],
 			},
 			{
@@ -187,12 +197,68 @@ export class Distru implements INodeType {
 				},
 			},
 			{
-				displayName: 'Query',
-				name: 'query',
-				type: 'json',
-				default: '{}',
+				displayName: 'Page Number',
+				name: 'pageNumber',
+				type: 'number',
+				typeOptions: { minValue: 0 },
+				default: 0,
+				description: 'Sent as page[number]. Use 0 to omit pagination for this field.',
+				displayOptions: {
+					show: {
+						operation: QUERY_OPERATIONS,
+					},
+				},
+			},
+			{
+				displayName: 'Page Size',
+				name: 'pageSize',
+				type: 'number',
+				typeOptions: { minValue: 0 },
+				default: 0,
+				description: 'Sent as page[size]. Use 0 to omit (API default page size).',
+				displayOptions: {
+					show: {
+						operation: QUERY_OPERATIONS,
+					},
+				},
+			},
+			{
+				displayName: 'Additional Query Parameters',
+				name: 'additionalQueryParameters',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				placeholder: 'Add Parameter',
+				default: {},
+				displayOptions: {
+					show: {
+						operation: QUERY_OPERATIONS,
+					},
+				},
 				description:
-					'Query string values. Use page as {"number":1,"size":500} or page_number/page_size. Datetime filters support ranges, for example {"updated_datetime":"2025-05-04T04:40:21.817570Z,2025-09-18T16:27:44.946871Z"}',
+					'Extra query string keys sent as-is (for example filter[status], updated_datetime with a comma-separated range)',
+				options: [
+					{
+						displayName: 'Parameter',
+						name: 'queryParameter',
+						values: [
+							{
+								displayName: 'Name',
+								name: 'name',
+								type: 'string',
+								default: '',
+								placeholder: 'e.g. filter[status]',
+							},
+							{
+								displayName: 'Value',
+								name: 'value',
+								type: 'string',
+								default: '',
+							},
+						],
+					},
+				],
 			},
 			{
 				displayName: 'Body',
@@ -204,6 +270,8 @@ export class Distru implements INodeType {
 						operation: BODY_OPERATIONS,
 					},
 				},
+				description:
+					'JSON request body. Distru upserts often use nested attributes; use expressions where needed.',
 			},
 			{
 				displayName: 'Binary Property',
@@ -219,16 +287,40 @@ export class Distru implements INodeType {
 				description: 'Binary property containing the file to upload',
 			},
 			{
-				displayName: 'Form Data',
-				name: 'formData',
-				type: 'json',
-				default: '{}',
+				displayName: 'Additional Form Fields',
+				name: 'additionalFormFields',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				placeholder: 'Add Field',
+				default: {},
 				displayOptions: {
 					show: {
 						operation: FORM_DATA_OPERATIONS,
 					},
 				},
-				description: 'Additional multipart fields such as product_id, order_id, name, etc',
+				description: 'Other multipart text fields (for example product_id, order_id, name)',
+				options: [
+					{
+						displayName: 'Field',
+						name: 'formField',
+						values: [
+							{
+								displayName: 'Name',
+								name: 'name',
+								type: 'string',
+								default: '',
+							},
+							{
+								displayName: 'Value',
+								name: 'value',
+								type: 'string',
+								default: '',
+							},
+						],
+					},
+				],
 			},
 		],
 	};
@@ -274,8 +366,14 @@ export class Distru implements INodeType {
 				};
 
 				if (config.usesQuery) {
-					const query = this.getNodeParameter('query', i, {}) as IDataObject;
-					requestOptions.qs = normalizeQuery(query);
+					const pageNumber = this.getNodeParameter('pageNumber', i, 0) as number;
+					const pageSize = this.getNodeParameter('pageSize', i, 0) as number;
+					const additionalQueryParameters = this.getNodeParameter(
+						'additionalQueryParameters',
+						i,
+						{},
+					) as { queryParameter?: Array<{ name: string; value: string }> };
+					requestOptions.qs = buildQueryFromUi(pageNumber, pageSize, additionalQueryParameters);
 				}
 
 				if (config.usesBody) {
@@ -284,7 +382,10 @@ export class Distru implements INodeType {
 				}
 
 				if (config.usesFormData) {
-					const formData = (this.getNodeParameter('formData', i, {}) as IDataObject) ?? {};
+					const additionalFormFields = this.getNodeParameter('additionalFormFields', i, {}) as {
+						formField?: Array<{ name: string; value: string }>;
+					};
+					const formData = collectFormFields(additionalFormFields);
 					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
 					const binaryData = input[i].binary?.[binaryPropertyName];
 
