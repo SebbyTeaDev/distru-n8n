@@ -18,13 +18,6 @@ export class DistruApiCredentialsApi implements ICredentialType {
 			},
 			default: '',
 		},
-		{
-			displayName: 'Use Staging Environment',
-			name: 'useStaging',
-			type: 'boolean',
-			default: false,
-			description: 'Whether to use the staging environment instead of production',
-		},
 	];
 
 	authenticate: IAuthenticateGeneric = {

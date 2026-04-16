@@ -1,10 +1,8 @@
 import type {
-	IWebhookFunctions,
 	IPollFunctions,
 	INodeType,
 	INodeTypeDescription,
 	INodeExecutionData,
-	IWebhookResponseData,
 	IDataObject,
 } from 'n8n-workflow';
 
@@ -15,23 +13,13 @@ export class DistruTrigger implements INodeType {
 		icon: 'file:distru.svg',
 		group: ['trigger'],
 		version: 1,
-		description: 'Triggers workflow on Distru event (webhook or poll)',
-		subtitle: '={{$parameter["mode"]}}: {{$parameter["resource"]}}',
+		description: 'Polls Distru resources for new or updated records',
+		subtitle: '={{$parameter["resource"]}}',
 		defaults: {
 			name: 'Distru Trigger',
 		},
 		inputs: [],
 		outputs: ['main'],
-		webhooks: [
-			{
-				name: 'default',
-				httpMethod: 'POST',
-				responseMode: 'onReceived',
-				path: 'distru',
-				// Only active in webhook mode:
-				enabled: '={{$parameter["mode"] === "webhook"}}',
-			},
-		],
 		polling: true,
 		credentials: [
 			{
@@ -40,16 +28,6 @@ export class DistruTrigger implements INodeType {
 			},
 		],
 		properties: [
-			{
-				displayName: 'Trigger Type',
-				name: 'mode',
-				type: 'options',
-				options: [
-					{ name: 'Webhook (Receive From Distru)', value: 'webhook' },
-					{ name: 'Polling (Check Distru Periodically)', value: 'polling' },
-				],
-				default: 'webhook',
-			},
 			{
 				displayName: 'Resource',
 				name: 'resource',
@@ -88,19 +66,11 @@ export class DistruTrigger implements INodeType {
 				typeOptions: { minValue: 1 },
 				default: 5,
 				description: 'How often to poll Distru, in minutes',
-				displayOptions: { show: { mode: ['polling'], enablePolling: [true] } },
+				displayOptions: { show: { enablePolling: [true] } },
 			},
 			// Add any other filters for getCompany, getOrder, etc as options
 		],
 	};
-
-	// Webhook: receive from Distru
-	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
-		const body = this.getRequestObject().body;
-		return {
-			workflowData: [[{ json: body } as INodeExecutionData]],
-		};
-	}
 
 	// Polling: periodically fetch from Distru API
 	async poll(this: IPollFunctions): Promise<INodeExecutionData[][] | null> {
@@ -108,7 +78,7 @@ export class DistruTrigger implements INodeType {
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const credentials = await this.getCredentials('distruApi');
 
-		const baseUrl = (credentials.useStaging ? 'https://staging.distru.com/public/v1' : 'https://app.distru.com/public/v1');
+		const baseUrl = 'https://app.distru.com/public/v1';
 
 		const endpoint = resource;
 

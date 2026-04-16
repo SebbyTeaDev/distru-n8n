@@ -191,7 +191,8 @@ export class Distru implements INodeType {
 				name: 'query',
 				type: 'json',
 				default: '{}',
-				description: 'Query string values. Use page as {"number":1,"size":500} or page_number/page_size',
+				description:
+					'Query string values. Use page as {"number":1,"size":500} or page_number/page_size. Datetime filters support ranges, for example {"updated_datetime":"2025-05-04T04:40:21.817570Z,2025-09-18T16:27:44.946871Z"}',
 			},
 			{
 				displayName: 'Body',
@@ -241,9 +242,7 @@ export class Distru implements INodeType {
 			throw new NodeOperationError(this.getNode(), 'Distru API token is not set');
 		}
 
-		const baseUrl = credentials.useStaging
-			? 'https://staging.distru.com/public/v1'
-			: 'https://app.distru.com/public/v1';
+		const baseUrl = 'https://app.distru.com/public/v1';
 
 		for (let i = 0; i < input.length; i++) {
 			try {
