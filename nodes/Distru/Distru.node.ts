@@ -1,4 +1,13 @@
-import { IDataObject, IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, NodeOperationError } from 'n8n-workflow';
+import {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+	NodeOperationError,
+} from 'n8n-workflow';
+
+import { buildResourceOperationProperties, RESOURCE_OPTIONS } from './lib/resourceOperations';
 
 type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
@@ -124,8 +133,8 @@ export class Distru implements INodeType {
 		name: 'distru',
 		icon: 'file:distru.svg',
 		group: ['transform'],
-		version: 3,
-		subtitle: '={{$parameter["operation"]}}',
+		version: 4,
+		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description: 'Interact with the Distru Public API v1',
 		defaults: {
 			name: 'Distru',
@@ -140,50 +149,17 @@ export class Distru implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Operation',
-				name: 'operation',
+				displayName: 'Resource',
+				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
 				required: true,
-				default: 'getProducts',
-				options: [
-					{ name: 'Adjustments — Get Many', value: 'getAdjustments', action: 'Adjustments get many' },
-					{ name: 'Adjustments — Post', value: 'postAdjustment', action: 'Adjustments post' },
-					{ name: 'Assemblies — Get Many', value: 'getAssemblies', action: 'Assemblies get many' },
-					{ name: 'Batches — Get Many', value: 'getBatches', action: 'Batches get many' },
-					{ name: 'Batches — Post', value: 'postBatch', action: 'Batches post' },
-					{ name: 'Companies — Get Many', value: 'getCompanies', action: 'Companies get many' },
-					{ name: 'Companies — Upsert', value: 'upsertCompany', action: 'Companies upsert' },
-					{ name: 'Contacts — Get Many', value: 'getContacts', action: 'Contacts get many' },
-					{ name: 'Contacts — Upsert', value: 'upsertContact', action: 'Contacts upsert' },
-					{ name: 'Custom Fields — Post', value: 'postCustomField', action: 'Custom fields post' },
-					{ name: 'File Attachments — Upload', value: 'postFileAttachment', action: 'File attachments upload' },
-					{ name: 'Inventory — Get Many', value: 'getInventory', action: 'Inventory get many' },
-					{ name: 'Invoices — Get by ID', value: 'getInvoiceById', action: 'Invoices get by id' },
-					{ name: 'Invoices — Get Many', value: 'getInvoices', action: 'Invoices get many' },
-					{ name: 'Invoices — Post Payment', value: 'postInvoicePayment', action: 'Invoices post payment' },
-					{ name: 'Invoices — Upsert', value: 'upsertInvoice', action: 'Invoices upsert' },
-					{ name: 'Locations — Get Many', value: 'getLocations', action: 'Locations get many' },
-					{ name: 'Orders — Get by ID', value: 'getOrderById', action: 'Orders get by id' },
-					{ name: 'Orders — Get Many', value: 'getOrders', action: 'Orders get many' },
-					{ name: 'Orders — Upsert', value: 'upsertOrder', action: 'Orders upsert' },
-					{ name: 'Packages — Get Many', value: 'getPackages', action: 'Packages get many' },
-					{ name: 'Payment Methods — Get Many', value: 'getPaymentMethods', action: 'Payment methods get many' },
-					{ name: 'Product POS Mappings — Delete', value: 'deleteProductPosMapping', action: 'Product pos mappings delete' },
-					{ name: 'Product POS Mappings — Get Many', value: 'getProductPosMappings', action: 'Product pos mappings get many' },
-					{ name: 'Product POS Mappings — Upsert', value: 'upsertProductPosMapping', action: 'Product pos mappings upsert' },
-					{ name: 'Products — Get Many', value: 'getProducts', action: 'Products get many' },
-					{ name: 'Products — Upsert', value: 'upsertProduct', action: 'Products upsert' },
-					{ name: 'Products — Upsert Images', value: 'upsertProductImages', action: 'Products upsert images' },
-					{ name: 'Purchases — Get Many', value: 'getPurchases', action: 'Purchases get many' },
-					{ name: 'Purchases — Post Payment', value: 'postPurchasePayment', action: 'Purchases post payment' },
-					{ name: 'Purchases — Upsert', value: 'upsertPurchase', action: 'Purchases upsert' },
-					{ name: 'Strains — Get Many', value: 'getStrains', action: 'Strains get many' },
-					{ name: 'Test Results — Get Many', value: 'getTestResults', action: 'Test results get many' },
-					{ name: 'Test Results — Upsert', value: 'upsertTestResult', action: 'Test results upsert' },
-					{ name: 'Users — Get Many', value: 'getUsers', action: 'Users get many' },
-				],
+				default: 'products',
+				options: RESOURCE_OPTIONS,
+				description:
+					'API area. The action picker groups operations under each resource (same pattern as the built-in n8n node).',
 			},
+			...buildResourceOperationProperties(),
 			{
 				displayName: 'Resource ID',
 				name: 'pathId',

@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.9] - 2026-04-16
+
+### Changed
+
+- **Distru** node **typeVersion 4**: **Resource** + **Operation** layout (same idea as the built-in **n8n** node). One `Operation` field per resource value, each scoped with `displayOptions.show.resource`, so the action catalog and node details list actions under endpoint-style sections instead of one flat list.
+
+### Migration from typeVersion 3
+
+- Upgrade the node to v4. Choose **Resource** first, then **Operation**. Saved workflows still run from the stored `operation` value; set **Resource** to match for a clear UI.
+
+[4.1.9]: https://github.com/SebbyTeaDev/distru-n8n/compare/v4.1.8...v4.1.9
+
 ## [4.1.8] - 2026-04-16
 
 ### Changed
