@@ -78,7 +78,9 @@ export class DistruTrigger implements INodeType {
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const credentials = await this.getCredentials('distruApi');
 
-		const baseUrl = 'https://app.distru.com/public/v1';
+		const baseUrl = credentials.useStaging
+			? 'https://staging.distru.com/public/v1'
+			: 'https://app.distru.com/public/v1';
 
 		const endpoint = resource;
 

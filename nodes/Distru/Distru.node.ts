@@ -242,7 +242,9 @@ export class Distru implements INodeType {
 			throw new NodeOperationError(this.getNode(), 'Distru API token is not set');
 		}
 
-		const baseUrl = 'https://app.distru.com/public/v1';
+		const baseUrl = credentials.useStaging
+			? 'https://staging.distru.com/public/v1'
+			: 'https://app.distru.com/public/v1';
 
 		for (let i = 0; i < input.length; i++) {
 			try {
