@@ -3,7 +3,7 @@
 # Prefer npm Trusted Publishing (OIDC): no long-lived NPM_TOKEN to rotate.
 #   npm → Package → n8n-nodes-distru → Settings → Trusted publishing
 #   Workflow filename must match exactly: publish-npm.yml
-#   Requires Node ≥ 22.14 and npm CLI ≥ 11.5.1 (see npm docs).
+#   Publish uses npx npm@11.5.1 so the CLI meets trusted publishing requirements without a fragile global npm upgrade on the runner.
 #
 # Optional fallback: set repository secret NPM_TOKEN if you are not using OIDC yet.
 name: Publish to npm
@@ -48,7 +48,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
 
       - name: Install dependencies
@@ -75,10 +74,6 @@ jobs:
             echo "Will publish $PACKAGE_NAME@$LOCAL_VERSION (npm has: ${PUBLISHED_VERSION:-none})."
           fi
 
-      - name: Upgrade npm for trusted publishing (OIDC)
-        if: steps.version_check.outputs.publish == 'true'
-        run: npm install -g npm@^11.5.1
-
       - name: Publish package
         if: steps.version_check.outputs.publish == 'true'
         env:
@@ -87,4 +82,4 @@ jobs:
           if [ -n "$NPM_TOKEN" ]; then
             export NODE_AUTH_TOKEN="$NPM_TOKEN"
           fi
-          npm publish --access public --provenance
+          npx --yes npm@11.5.1 publish --access public --provenance
