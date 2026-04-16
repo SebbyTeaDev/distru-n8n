@@ -1,0 +1,92 @@
+# Publishes when package.json version is newer than npm.
+#
+# Prefer npm Trusted Publishing (OIDC): no long-lived NPM_TOKEN to rotate.
+#   npm → Package → n8n-nodes-distru → Settings → Trusted publishing
+#   Workflow filename must match exactly: publish-npm.yml
+#   Requires Node ≥ 22.14 and npm CLI ≥ 11.5.1 (see npm docs).
+#
+# Optional fallback: set repository secret NPM_TOKEN if you are not using OIDC yet.
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "pnpm-lock.yaml"
+      - "nodes/**"
+      - "credentials/**"
+      - "index.js"
+      - "tsconfig.json"
+      - "gulpfile.js"
+      - ".github/workflows/publish-npm.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check if version needs publish
+        id: version_check
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || true)
+
+          echo "local_version=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "published_version=$PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$LOCAL_VERSION" = "$PUBLISHED_VERSION" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Version $LOCAL_VERSION is already on npm. Skipping publish."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "Will publish $PACKAGE_NAME@$LOCAL_VERSION (npm has: ${PUBLISHED_VERSION:-none})."
+          fi
+
+      - name: Upgrade npm for trusted publishing (OIDC)
+        if: steps.version_check.outputs.publish == 'true'
+        run: npm install -g npm@^11.5.1
+
+      - name: Publish package
+        if: steps.version_check.outputs.publish == 'true'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            export NODE_AUTH_TOKEN="$NPM_TOKEN"
+          fi
+          npm publish --access public --provenance
