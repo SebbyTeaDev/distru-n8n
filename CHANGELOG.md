@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.10] - 2026-04-16
+
+### Changed
+
+- **Distru** node **typeVersion 5**: Operation-specific field definitions. Each operation now displays only the fields relevant to that specific API endpoint, replacing the generic **Body** JSON field and **Additional Query Parameters** with tailored form fields.
+  - **POST operations** (e.g., `postAdjustment`, `upsertProduct`, `upsertOrder`) now show dedicated fields for required parameters and an **Additional Fields** collection for optional parameters
+  - **GET operations** now have an **Additional Fields** collection with pagination and filter options specific to each endpoint
+  - Improved validation and user experience with clear field labels, descriptions, and required field indicators
+  - Request bodies are now built programmatically from form fields instead of requiring manual JSON construction
+
+### Migration from typeVersion 4
+
+- Upgrade the node to v5. Operations that previously used the **Body** JSON field will now show operation-specific form fields. For example:
+  - `postAdjustment`: Now shows individual fields for **Product ID**, **Batch ID**, **Package ID**, **Completion Datetime**, **Reason**, etc., instead of a JSON body
+  - `upsertOrder`: Shows **Company ID** as a required field, with **Items** and **Charges** as structured collections
+  - All GET operations: Use the **Additional Fields** collection for pagination (`page_number`, `page_size`) and filters instead of **Page Number**, **Page Size**, and **Additional Query Parameters** fields
+- If upgrading from workflows with JSON body content, manually map the JSON fields to the new form fields
+
+[4.1.10]: https://github.com/SebbyTeaDev/distru-n8n/compare/v4.1.9...v4.1.10
+
 ## [4.1.9] - 2026-04-16
 
 ### Changed

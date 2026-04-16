@@ -8,68 +8,61 @@ import {
 } from 'n8n-workflow';
 
 import { buildResourceOperationProperties, RESOURCE_OPTIONS } from './lib/resourceOperations';
+import { buildOperationFields } from './lib/operationFields';
 
 type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
 interface OperationConfig {
 	method: HttpMethod;
 	path: string;
-	usesQuery?: boolean;
-	usesBody?: boolean;
 	usesFormData?: boolean;
 	pathIdRequired?: boolean;
 }
 
 const OPERATION_CONFIG: Record<string, OperationConfig> = {
-	getAdjustments: { method: 'GET', path: '/adjustments', usesQuery: true },
-	getAssemblies: { method: 'GET', path: '/assemblies', usesQuery: true },
-	getBatches: { method: 'GET', path: '/batches', usesQuery: true },
-	getCompanies: { method: 'GET', path: '/companies', usesQuery: true },
-	getContacts: { method: 'GET', path: '/contacts', usesQuery: true },
-	getInventory: { method: 'GET', path: '/inventory', usesQuery: true },
-	getInvoices: { method: 'GET', path: '/invoices', usesQuery: true },
+	getAdjustments: { method: 'GET', path: '/adjustments' },
+	getAssemblies: { method: 'GET', path: '/assemblies' },
+	getBatches: { method: 'GET', path: '/batches' },
+	getCompanies: { method: 'GET', path: '/companies' },
+	getContacts: { method: 'GET', path: '/contacts' },
+	getInventory: { method: 'GET', path: '/inventory' },
+	getInvoices: { method: 'GET', path: '/invoices' },
 	getInvoiceById: { method: 'GET', path: '/invoices/:id', pathIdRequired: true },
-	getLocations: { method: 'GET', path: '/locations', usesQuery: true },
-	getOrders: { method: 'GET', path: '/orders', usesQuery: true },
+	getLocations: { method: 'GET', path: '/locations' },
+	getOrders: { method: 'GET', path: '/orders' },
 	getOrderById: { method: 'GET', path: '/orders/:id', pathIdRequired: true },
-	getPackages: { method: 'GET', path: '/packages', usesQuery: true },
-	getPaymentMethods: { method: 'GET', path: '/payment-methods', usesQuery: true },
-	getProductPosMappings: { method: 'GET', path: '/product-pos-mappings', usesQuery: true },
-	getProducts: { method: 'GET', path: '/products', usesQuery: true },
-	getPurchases: { method: 'GET', path: '/purchases', usesQuery: true },
-	getStrains: { method: 'GET', path: '/strains', usesQuery: true },
-	getTestResults: { method: 'GET', path: '/test-results', usesQuery: true },
-	getUsers: { method: 'GET', path: '/users', usesQuery: true },
-	postAdjustment: { method: 'POST', path: '/adjustments', usesQuery: true },
-	postBatch: { method: 'POST', path: '/batches', usesQuery: true },
-	upsertCompany: { method: 'POST', path: '/companies', usesQuery: true },
-	upsertContact: { method: 'POST', path: '/contacts', usesQuery: true },
-	postCustomField: { method: 'POST', path: '/custom-fields', usesQuery: true },
+	getPackages: { method: 'GET', path: '/packages' },
+	getPaymentMethods: { method: 'GET', path: '/payment-methods' },
+	getProductPosMappings: { method: 'GET', path: '/product-pos-mappings' },
+	getProducts: { method: 'GET', path: '/products' },
+	getPurchases: { method: 'GET', path: '/purchases' },
+	getStrains: { method: 'GET', path: '/strains' },
+	getTestResults: { method: 'GET', path: '/test-results' },
+	getUsers: { method: 'GET', path: '/users' },
+	postAdjustment: { method: 'POST', path: '/adjustments' },
+	postBatch: { method: 'POST', path: '/batches' },
+	upsertCompany: { method: 'POST', path: '/companies' },
+	upsertContact: { method: 'POST', path: '/contacts' },
+	postCustomField: { method: 'POST', path: '/custom-fields' },
 	postFileAttachment: { method: 'POST', path: '/file-attachments', usesFormData: true },
-	upsertInvoice: { method: 'POST', path: '/invoices', usesQuery: true, usesBody: true },
-	postInvoicePayment: { method: 'POST', path: '/invoices/:id/payments', pathIdRequired: true, usesQuery: true },
-	upsertOrder: { method: 'POST', path: '/orders', usesQuery: true, usesBody: true },
-	upsertProductPosMapping: { method: 'POST', path: '/product-pos-mappings', usesBody: true },
+	upsertInvoice: { method: 'POST', path: '/invoices' },
+	postInvoicePayment: { method: 'POST', path: '/invoices/:id/payments', pathIdRequired: true },
+	upsertOrder: { method: 'POST', path: '/orders' },
+	upsertProductPosMapping: { method: 'POST', path: '/product-pos-mappings' },
 	deleteProductPosMapping: { method: 'DELETE', path: '/product-pos-mappings/:id', pathIdRequired: true },
-	upsertProduct: { method: 'POST', path: '/products', usesQuery: true },
-	upsertProductImages: { method: 'POST', path: '/products/:id/images', pathIdRequired: true, usesBody: true },
-	upsertPurchase: { method: 'POST', path: '/purchases', usesQuery: true, usesBody: true },
-	postPurchasePayment: { method: 'POST', path: '/purchases/:id/payments', pathIdRequired: true, usesQuery: true },
-	upsertTestResult: { method: 'POST', path: '/test-results', usesQuery: true },
+	upsertProduct: { method: 'POST', path: '/products' },
+	upsertProductImages: { method: 'POST', path: '/products/:id/images', pathIdRequired: true },
+	upsertPurchase: { method: 'POST', path: '/purchases' },
+	postPurchasePayment: { method: 'POST', path: '/purchases/:id/payments', pathIdRequired: true },
+	upsertTestResult: { method: 'POST', path: '/test-results' },
 };
 
 const PATH_ID_OPERATIONS = Object.keys(OPERATION_CONFIG).filter(
 	(op) => OPERATION_CONFIG[op].pathIdRequired,
 );
 
-const BODY_OPERATIONS = Object.keys(OPERATION_CONFIG).filter((op) => OPERATION_CONFIG[op].usesBody);
-
 const FORM_DATA_OPERATIONS = Object.keys(OPERATION_CONFIG).filter(
 	(op) => OPERATION_CONFIG[op].usesFormData,
-);
-
-const QUERY_OPERATIONS = Object.keys(OPERATION_CONFIG).filter(
-	(op) => OPERATION_CONFIG[op].usesQuery,
 );
 
 function removeEmpty(value: unknown): unknown {
@@ -93,38 +86,165 @@ function removeEmpty(value: unknown): unknown {
 	return value;
 }
 
-function buildQueryFromUi(
-	pageNumber: number,
-	pageSize: number,
-	additional: { queryParameter?: Array<{ name: string; value: string }> },
-): IDataObject {
+/**
+ * Build query string from additionalFields for GET operations
+ */
+function buildQueryString(additionalFields: IDataObject): IDataObject {
 	const qs: IDataObject = {};
-	if (pageNumber > 0) {
-		qs['page[number]'] = pageNumber;
-	}
-	if (pageSize > 0) {
-		qs['page[size]'] = pageSize;
-	}
-	for (const row of additional.queryParameter ?? []) {
-		const key = (row.name ?? '').trim();
-		if (key) {
-			qs[key] = row.value;
+
+	for (const [key, value] of Object.entries(additionalFields)) {
+		// Handle pagination
+		if (key === 'page_number' && value) {
+			qs['page[number]'] = value;
+		} else if (key === 'page_size' && value) {
+			qs['page[size]'] = value;
+		} else if (value !== undefined && value !== '' && value !== null) {
+			qs[key] = value;
 		}
 	}
+
 	return (removeEmpty(qs) as IDataObject) ?? {};
 }
 
-function collectFormFields(additional: {
-	formField?: Array<{ name: string; value: string }>;
-}): IDataObject {
-	const out: IDataObject = {};
-	for (const row of additional.formField ?? []) {
-		const key = (row.name ?? '').trim();
-		if (key) {
-			out[key] = row.value;
+/**
+ * Build request body from operation-specific parameters
+ */
+function buildRequestBody(
+	context: IExecuteFunctions,
+	operation: string,
+	index: number,
+): IDataObject {
+	const body: IDataObject = {};
+
+	// Handle operations with direct field parameters
+	if (operation === 'postAdjustment') {
+		const productId = context.getNodeParameter('product_id', index, '') as string;
+		const batchId = context.getNodeParameter('batch_id', index, '') as string;
+		const packageId = context.getNodeParameter('package_id', index, '') as string;
+		const completionDatetime = context.getNodeParameter('completion_datetime', index) as string;
+		const reason = context.getNodeParameter('reason', index) as string;
+		const locationId = context.getNodeParameter('location_id', index, '') as string;
+		const quantity = context.getNodeParameter('quantity', index, 0) as number;
+
+		if (productId) body.product_id = productId;
+		if (batchId) body.batch_id = batchId;
+		if (packageId) body.package_id = packageId;
+		body.completion_datetime = completionDatetime;
+		body.reason = reason;
+		if (locationId) body.location_id = locationId;
+		if (quantity) body.quantity = quantity;
+
+		// Add additional fields
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'postBatch') {
+		const productId = context.getNodeParameter('product_id', index) as string;
+		body.product_id = productId;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'upsertContact') {
+		const firstName = context.getNodeParameter('first_name', index) as string;
+		body.first_name = firstName;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'postCustomField') {
+		const name = context.getNodeParameter('name', index) as string;
+		const parentObject = context.getNodeParameter('parent_object', index) as string;
+		const fieldType = context.getNodeParameter('field_type', index) as string;
+
+		body.name = name;
+		body.parent_object = parentObject;
+		body.field_type = fieldType;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'upsertProduct') {
+		const name = context.getNodeParameter('name', index) as string;
+		body.name = name;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'upsertProductImages') {
+		const images = context.getNodeParameter('images', index, []) as string[];
+		body.images = images;
+	} else if (operation === 'upsertProductPosMapping') {
+		const productId = context.getNodeParameter('product_id', index) as string;
+		body.product_id = productId;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'upsertOrder') {
+		const companyId = context.getNodeParameter('company_id', index) as string;
+		body.company_id = companyId;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+
+		// Handle items
+		const itemsParam = context.getNodeParameter('items', index, {}) as IDataObject;
+		if (itemsParam.item && Array.isArray(itemsParam.item)) {
+			body.items = itemsParam.item;
 		}
+
+		// Handle charges
+		const chargesParam = context.getNodeParameter('charges', index, {}) as IDataObject;
+		if (chargesParam.charge && Array.isArray(chargesParam.charge)) {
+			body.charges = chargesParam.charge;
+		}
+	} else if (operation === 'upsertInvoice') {
+		const orderId = context.getNodeParameter('order_id', index) as string;
+		body.order_id = orderId;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+
+		const itemsParam = context.getNodeParameter('items', index, {}) as IDataObject;
+		if (itemsParam.item && Array.isArray(itemsParam.item)) {
+			body.items = itemsParam.item;
+		}
+
+		const chargesParam = context.getNodeParameter('charges', index, {}) as IDataObject;
+		if (chargesParam.charge && Array.isArray(chargesParam.charge)) {
+			body.charges = chargesParam.charge;
+		}
+	} else if (operation === 'postInvoicePayment' || operation === 'postPurchasePayment') {
+		const paymentMethodId = context.getNodeParameter('payment_method_id', index) as string;
+		const amount = context.getNodeParameter('amount', index) as number;
+		const paymentDatetime = context.getNodeParameter('payment_datetime', index) as string;
+		const description = context.getNodeParameter('description', index) as string;
+
+		body.payment_method_id = paymentMethodId;
+		body.amount = amount;
+		body.payment_datetime = paymentDatetime;
+		body.description = description;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+	} else if (operation === 'upsertPurchase') {
+		const companyId = context.getNodeParameter('company_id', index) as string;
+		body.company_id = companyId;
+
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
+
+		const itemsParam = context.getNodeParameter('items', index, {}) as IDataObject;
+		if (itemsParam.item && Array.isArray(itemsParam.item)) {
+			body.items = itemsParam.item;
+		}
+
+		const chargesParam = context.getNodeParameter('charges', index, {}) as IDataObject;
+		if (chargesParam.charge && Array.isArray(chargesParam.charge)) {
+			body.charges = chargesParam.charge;
+		}
+	} else if (operation === 'upsertCompany' || operation === 'upsertTestResult') {
+		// These operations only have additionalFields
+		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
+		Object.assign(body, additionalFields);
 	}
-	return (removeEmpty(out) as IDataObject) ?? {};
+
+	return (removeEmpty(body) as IDataObject) ?? {};
 }
 
 export class Distru implements INodeType {
@@ -133,7 +253,7 @@ export class Distru implements INodeType {
 		name: 'distru',
 		icon: 'file:distru.svg',
 		group: ['transform'],
-		version: 4,
+		version: 5,
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description: 'Interact with the Distru Public API v1',
 		defaults: {
@@ -173,83 +293,6 @@ export class Distru implements INodeType {
 				},
 			},
 			{
-				displayName: 'Page Number',
-				name: 'pageNumber',
-				type: 'number',
-				typeOptions: { minValue: 0 },
-				default: 0,
-				description: 'Sent as page[number]. Use 0 to omit pagination for this field.',
-				displayOptions: {
-					show: {
-						operation: QUERY_OPERATIONS,
-					},
-				},
-			},
-			{
-				displayName: 'Page Size',
-				name: 'pageSize',
-				type: 'number',
-				typeOptions: { minValue: 0 },
-				default: 0,
-				description: 'Sent as page[size]. Use 0 to omit (API default page size).',
-				displayOptions: {
-					show: {
-						operation: QUERY_OPERATIONS,
-					},
-				},
-			},
-			{
-				displayName: 'Additional Query Parameters',
-				name: 'additionalQueryParameters',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
-				placeholder: 'Add Parameter',
-				default: {},
-				displayOptions: {
-					show: {
-						operation: QUERY_OPERATIONS,
-					},
-				},
-				description:
-					'Extra query string keys sent as-is (for example filter[status], updated_datetime with a comma-separated range)',
-				options: [
-					{
-						displayName: 'Parameter',
-						name: 'queryParameter',
-						values: [
-							{
-								displayName: 'Name',
-								name: 'name',
-								type: 'string',
-								default: '',
-								placeholder: 'e.g. filter[status]',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								type: 'string',
-								default: '',
-							},
-						],
-					},
-				],
-			},
-			{
-				displayName: 'Body',
-				name: 'body',
-				type: 'json',
-				default: '{}',
-				displayOptions: {
-					show: {
-						operation: BODY_OPERATIONS,
-					},
-				},
-				description:
-					'JSON request body. Distru upserts often use nested attributes; use expressions where needed.',
-			},
-			{
 				displayName: 'Binary Property',
 				name: 'binaryPropertyName',
 				type: 'string',
@@ -262,42 +305,8 @@ export class Distru implements INodeType {
 				},
 				description: 'Binary property containing the file to upload',
 			},
-			{
-				displayName: 'Additional Form Fields',
-				name: 'additionalFormFields',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
-				placeholder: 'Add Field',
-				default: {},
-				displayOptions: {
-					show: {
-						operation: FORM_DATA_OPERATIONS,
-					},
-				},
-				description: 'Other multipart text fields (for example product_id, order_id, name)',
-				options: [
-					{
-						displayName: 'Field',
-						name: 'formField',
-						values: [
-							{
-								displayName: 'Name',
-								name: 'name',
-								type: 'string',
-								default: '',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								type: 'string',
-								default: '',
-							},
-						],
-					},
-				],
-			},
+			// Operation-specific fields
+			...buildOperationFields(),
 		],
 	};
 
@@ -341,27 +350,31 @@ export class Distru implements INodeType {
 					json: true,
 				};
 
-				if (config.usesQuery) {
-					const pageNumber = this.getNodeParameter('pageNumber', i, 0) as number;
-					const pageSize = this.getNodeParameter('pageSize', i, 0) as number;
-					const additionalQueryParameters = this.getNodeParameter(
-						'additionalQueryParameters',
-						i,
-						{},
-					) as { queryParameter?: Array<{ name: string; value: string }> };
-					requestOptions.qs = buildQueryFromUi(pageNumber, pageSize, additionalQueryParameters);
+				// Handle GET operations with query parameters
+				if (config.method === 'GET') {
+					const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
+
+					// Special handling for inventory grouping parameter
+					if (operation === 'getInventory') {
+						const grouping = this.getNodeParameter('grouping', i, ['PRODUCT']) as string[];
+						const qs: IDataObject = {};
+						grouping.forEach((g, idx) => {
+							qs[`grouping[${idx}]`] = g;
+						});
+						Object.assign(qs, buildQueryString(additionalFields));
+						requestOptions.qs = qs;
+					} else {
+						requestOptions.qs = buildQueryString(additionalFields);
+					}
 				}
 
-				if (config.usesBody) {
-					const body = this.getNodeParameter('body', i, {}) as IDataObject;
-					requestOptions.body = (removeEmpty(body) as IDataObject) ?? {};
+				// Handle POST/DELETE operations with request body
+				if (config.method === 'POST' && !config.usesFormData) {
+					requestOptions.body = buildRequestBody(this, operation, i);
 				}
 
+				// Handle file upload operations
 				if (config.usesFormData) {
-					const additionalFormFields = this.getNodeParameter('additionalFormFields', i, {}) as {
-						formField?: Array<{ name: string; value: string }>;
-					};
-					const formData = collectFormFields(additionalFormFields);
 					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
 					const binaryData = input[i].binary?.[binaryPropertyName];
 
@@ -373,11 +386,37 @@ export class Distru implements INodeType {
 					}
 
 					const buffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-					const cleanedFormData = (removeEmpty(formData) as IDataObject) ?? {};
+
+					// Build form data fields based on operation
+					const formData: IDataObject = {};
+
+					if (operation === 'postFileAttachment') {
+						const attachTo = this.getNodeParameter('attachTo', i) as string;
+						const entityId = this.getNodeParameter('entityId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
+
+						// Map attachTo to the correct field name
+						const fieldMap: Record<string, string> = {
+							product: 'product_id',
+							order: 'order_id',
+							purchase: 'purchase_id',
+							invoice: 'invoice_id',
+							batch: 'batch_id',
+							contact: 'contact_id',
+							company: 'company_relationship_id',
+							assembly: 'assembly_id',
+						};
+
+						formData[fieldMap[attachTo]] = entityId;
+
+						if (additionalFields.name) {
+							formData.name = additionalFields.name;
+						}
+					}
 
 					requestOptions.json = false;
 					requestOptions.formData = {
-						...cleanedFormData,
+						...formData,
 						file: {
 							value: buffer,
 							options: {
