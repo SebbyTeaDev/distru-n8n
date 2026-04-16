@@ -6,14 +6,14 @@
     "n8n-community-node-package"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Sebbytea/distru-n8n",
+  "homepage": "https://github.com/SebbyTeaDev/distru-n8n",
   "author": {
     "name": "Sebastian Tidwell",
     "email": "Sebastian@distru.com"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sebbytea/distru-n8n.git"
+    "url": "git+https://github.com/SebbyTeaDev/distru-n8n.git"
   },
   "engines": {
     "node": ">=18.10",
