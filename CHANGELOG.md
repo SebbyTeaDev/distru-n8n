@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.12] - 2026-04-16
+
+### Fixed
+
+- **Stock adjustments endpoint path**: Corrected endpoint paths from `/adjustments` to `/stock-adjustments` for both GET and POST operations to match the Distru Public API v1 specification
+
+[4.2.12]: https://github.com/SebbyTeaDev/distru-n8n/compare/v4.1.10...v4.2.12
+
 ## [4.1.10] - 2026-04-16
 
 ### Changed

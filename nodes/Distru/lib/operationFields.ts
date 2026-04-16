@@ -119,7 +119,15 @@ function getAdjustmentsFields(): INodeProperties[] {
 			type: 'number',
 			default: 0,
 			displayOptions: { show: { operation: ['postAdjustment'] } },
-			description: 'Adjustment quantity (required for non-package tracked products)',
+			description: 'Adjustment quantity (required for non-package tracked products; cannot be set for package-tracked products)',
+		},
+		{
+			displayName: 'Compliance Quantity',
+			name: 'compliance_quantity',
+			type: 'number',
+			default: 0,
+			displayOptions: { show: { operation: ['postAdjustment'] } },
+			description: 'Quantity in compliance unit type (required for package-tracked products)',
 		},
 		{
 			displayName: 'Additional Fields',
@@ -149,13 +157,6 @@ function getAdjustmentsFields(): INodeProperties[] {
 					type: 'number',
 					default: 0,
 					description: 'Total cost of the adjustment',
-				},
-				{
-					displayName: 'Compliance Quantity',
-					name: 'compliance_quantity',
-					type: 'number',
-					default: 0,
-					description: 'Quantity in compliance unit type',
 				},
 				{
 					displayName: 'Unit Type',
@@ -1210,21 +1211,13 @@ function getProductsFields(): INodeProperties[] {
 
 	const upsertFields: INodeProperties[] = [
 		{
-			displayName: 'Name',
-			name: 'name',
-			type: 'string',
-			required: true,
-			default: '',
-			displayOptions: { show: { operation: ['upsertProduct'] } },
-			description: 'Product name (required)',
-		},
-		{
 			displayName: 'Additional Fields',
 			name: 'additionalFields',
 			type: 'collection',
 			placeholder: 'Add Field',
 			default: {},
 			displayOptions: { show: { operation: ['upsertProduct'] } },
+			description: 'All fields are optional. Include ID to update existing product, or Name to create new product.',
 			options: [
 				{
 					displayName: 'ID',
@@ -1232,6 +1225,13 @@ function getProductsFields(): INodeProperties[] {
 					type: 'string',
 					default: '',
 					description: 'Product ID (for update)',
+				},
+				{
+					displayName: 'Name',
+					name: 'name',
+					type: 'string',
+					default: '',
+					description: 'Product name (required for create)',
 				},
 				{
 					displayName: 'SKU',

@@ -20,7 +20,7 @@ interface OperationConfig {
 }
 
 const OPERATION_CONFIG: Record<string, OperationConfig> = {
-	getAdjustments: { method: 'GET', path: '/adjustments' },
+	getAdjustments: { method: 'GET', path: '/stock-adjustments' },
 	getAssemblies: { method: 'GET', path: '/assemblies' },
 	getBatches: { method: 'GET', path: '/batches' },
 	getCompanies: { method: 'GET', path: '/companies' },
@@ -39,7 +39,7 @@ const OPERATION_CONFIG: Record<string, OperationConfig> = {
 	getStrains: { method: 'GET', path: '/strains' },
 	getTestResults: { method: 'GET', path: '/test-results' },
 	getUsers: { method: 'GET', path: '/users' },
-	postAdjustment: { method: 'POST', path: '/adjustments' },
+	postAdjustment: { method: 'POST', path: '/stock-adjustments' },
 	postBatch: { method: 'POST', path: '/batches' },
 	upsertCompany: { method: 'POST', path: '/companies' },
 	upsertContact: { method: 'POST', path: '/contacts' },
@@ -125,6 +125,7 @@ function buildRequestBody(
 		const reason = context.getNodeParameter('reason', index) as string;
 		const locationId = context.getNodeParameter('location_id', index, '') as string;
 		const quantity = context.getNodeParameter('quantity', index, 0) as number;
+		const complianceQuantity = context.getNodeParameter('compliance_quantity', index, 0) as number;
 
 		if (productId) body.product_id = productId;
 		if (batchId) body.batch_id = batchId;
@@ -133,6 +134,7 @@ function buildRequestBody(
 		body.reason = reason;
 		if (locationId) body.location_id = locationId;
 		if (quantity) body.quantity = quantity;
+		if (complianceQuantity) body.compliance_quantity = complianceQuantity;
 
 		// Add additional fields
 		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
@@ -161,9 +163,7 @@ function buildRequestBody(
 		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
 		Object.assign(body, additionalFields);
 	} else if (operation === 'upsertProduct') {
-		const name = context.getNodeParameter('name', index) as string;
-		body.name = name;
-
+		// All fields are optional for upsert pattern
 		const additionalFields = context.getNodeParameter('additionalFields', index, {}) as IDataObject;
 		Object.assign(body, additionalFields);
 	} else if (operation === 'upsertProductImages') {
