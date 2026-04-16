@@ -55,16 +55,22 @@ export class DistruTrigger implements INodeType {
 				name: 'resource',
 				type: 'options',
 				required: true,
-				default: 'salesOrder',
+				default: 'orders',
 				noDataExpression: true,
 				options: [
-					{ name: 'Assembly',    value: 'assembly' },
-					{ name: 'Company',     value: 'company' },
-					{ name: 'Contact',     value: 'contact' },
-					{ name: 'Invoice',     value: 'invoice' },
-					{ name: 'Purchase Order', value: 'purchaseOrder' },
-					{ name: 'Return',      value: 'return' },
-					{ name: 'Sales Order', value: 'salesOrder' },
+					{ name: 'Adjustments', value: 'adjustments' },
+					{ name: 'Assemblies', value: 'assemblies' },
+					{ name: 'Batches', value: 'batches' },
+					{ name: 'Companies', value: 'companies' },
+					{ name: 'Contacts', value: 'contacts' },
+					{ name: 'Invoices', value: 'invoices' },
+					{ name: 'Orders', value: 'orders' },
+					{ name: 'Packages', value: 'packages' },
+					{ name: 'Products', value: 'products' },
+					{ name: 'Purchases', value: 'purchases' },
+					{ name: 'Strains', value: 'strains' },
+					{ name: 'Test Results', value: 'test-results' },
+					{ name: 'Users', value: 'users' },
 				],
 				description: 'Distru resource/event to trigger on',
 			},
@@ -104,16 +110,7 @@ export class DistruTrigger implements INodeType {
 
 		const baseUrl = (credentials.useStaging ? 'https://staging.distru.com/public/v1' : 'https://app.distru.com/public/v1');
 
-		const endpointMap: Record<string, string> = {
-			salesOrder: 'orders',
-			purchaseOrder: 'purchases',
-			assembly: 'assemblies',
-			invoice: 'invoices',
-			contact: 'contacts',
-			company: 'companies',
-			return: 'returns',
-		};
-		const endpoint = endpointMap[resource];
+		const endpoint = resource;
 
 		const staticData = this.getWorkflowStaticData('node');
 		let lastTime = staticData.lastTimeChecked as string | undefined;
